@@ -1,0 +1,4 @@
+CompileFlags:
+  Add: [-std=c17, -xc, -Wall, -Wextra, -Isrc, -Ibitset, -I../vector/src]
+  Compiler: cc
+---

@@ -1,0 +1,13 @@
+*
+
+
+!src/
+!tests/
+!*.c
+!*.h
+!*.am
+!*.ac
+
+!.gitignore
+!.clangd
+config.h
