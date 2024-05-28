@@ -3,14 +3,12 @@
 
 #include <stddef.h>
 
-/* a, b, c*/
 #define _SHIFT(_1, _2, _3, _4, _5, _6, _7, _8, NAME, ...) NAME
 #define _COUNT(...) _SHIFT(__VA_ARGS__, 8, 7, 6, 5, 4, 3, 2, 1)
 #define COUNTED_ARGS(...) _COUNT(__VA_ARGS__), __VA_ARGS__
 
 typedef size_t hash_t;
 typedef hash_t (*hashfunc_t)(const void *ptr, size_t size);
-typedef int (*is_match_t)(void* ptr, size_t size, void* param);
 
 hash_t hash_str(const char *str);
 hash_t hash_strn(const char *str, size_t size);
