@@ -87,6 +87,18 @@ void *hm_get(const hashmap_t *const map, const void *const key);
 
 
 /*
+* Shrink hashmap and perform rehash,
+* reserving free space portion of currently stored elements
+* (`reserve` param is a positive real number that denotes 
+*  how much free space to reserve relative to a current amount of elements being stored:
+*    = 0.0f -> do not reserve any space
+*    = 1.0f -> reserve as match free space as elements currently stored, etc...
+*  ).
+*/
+void hm_shrink_reserve(hashmap_t **const map, const float reserve);
+
+
+/*
 * Returns key's subset.
 */
 vector_t *hm_keys(const hashmap_t *const map);

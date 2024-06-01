@@ -45,7 +45,7 @@ static char *get_key(const hashmap_t *const map, const size_t index);
 static char *get_value(const hashmap_t *const map, const size_t index);
 
 static void randomize_factors(hm_header_t *const header);
-static void rehash(hashmap_t **const map);
+static void rehash(hashmap_t **const map, const size_t new_cap);
 
 /***                       ***
 * === API implementation === *
@@ -118,8 +118,10 @@ bool hm_insert(hashmap_t **const map, const void *key, const void *value)
         }
     }
 
-    rehash(map); /* rehash never fails unless allocation error
-                    occures in which case vector_error_handler will exit from the application. */
+    const size_t new_cap = 2 * hm_capacity(*map);
+    rehash(map, new_cap);
+    /* rehash never fails unless allocation error occures
+     * in which case vector_error_handler will exit from the application. */
     (void)hm_insert(map, key, value);
     return true;
 }
@@ -177,8 +179,10 @@ bool hm_upsert(hashmap_t **const map, const void *const key, const void *const v
         }
     }
 
-    rehash(map); /* rehash never fails unless allocation error
-                    occires in which case vector_error_handler will exit from the application. */
+    const size_t new_cap = 2 * hm_capacity(*map);
+    rehash(map, new_cap);
+    /* rehash never fails unless allocation error occures
+     * in which case vector_error_handler will exit from the application. */
     (void)hm_insert(map, key, value);
     return true;
 }
@@ -280,6 +284,18 @@ void *hm_get(const hashmap_t *const map, const void *const key)
     }
 
     return NULL;
+}
+
+
+void hm_shrink_reserve(hashmap_t **const map, const float reserve)
+{
+    assert(map && *map);
+    assert(reserve >= 0.0f);
+
+    const size_t count = hm_count(*map);
+    const size_t new_cap = count * (1.0f + reserve);
+
+    rehash(map, new_cap);
 }
 
 
@@ -402,16 +418,17 @@ static size_t hash_to_index(const hm_header_t *header, const hash_t hash, const 
 }
 
 
-static void rehash(hashmap_t **const map)
+static void rehash(hashmap_t **const map, const size_t new_cap)
 {
+    assert(new_cap >= hm_count(*map));
+
     const hm_header_t *old_header = get_hm_header(*map);
     const size_t prev_capacity = vector_initial_capacity(*map);
 
     hashmap_t *new;
-    const size_t new_capacity = 2 * vector_initial_capacity(*map);
 
     hm_create(new,
-        .initial_cap = new_capacity,
+        .initial_cap = new_cap,
         .key_size = old_header->key_size,
         .value_size = old_header->value_size,
         .hashfunc = old_header->hashfunc,
