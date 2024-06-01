@@ -51,7 +51,7 @@ static void rehash(hashmap_t **const map);
 * === API implementation === *
 ***                       ***/
 
-void hm_create_(hashmap_t **const map, const hm_opts_t *opts)
+void hm_create_(hashmap_t **const map, const hm_opts_t *const opts)
 {
     assert(opts->key_size && "key_size wasn't provided");
     assert(opts->value_size && "value_size wasn't provided");
@@ -83,15 +83,18 @@ void hm_create_(hashmap_t **const map, const hm_opts_t *opts)
 }
 
 
-void hm_destroy(hashmap_t *map)
+void hm_destroy(hashmap_t *const map)
 {
+    assert(map);
     vector_destroy(map);
 }
 
 
-bool hm_insert(hashmap_t **map, const void *key, const void *value)
+bool hm_insert(hashmap_t **const map, const void *key, const void *value)
 {
     assert(map && *map);
+    assert(key);
+    assert(value);
 
     hm_header_t* header = get_hm_header(*map);
     const size_t capacity = hm_capacity(*map);
@@ -125,6 +128,8 @@ bool hm_insert(hashmap_t **map, const void *key, const void *value)
 bool hm_update(hashmap_t *const map, const void *const key, const void *const value)
 {
     assert(map);
+    assert(key);
+    assert(value);
 
     void *old_value = hm_get(map, key);
     if (!old_value) return false;
@@ -138,6 +143,8 @@ bool hm_update(hashmap_t *const map, const void *const key, const void *const va
 bool hm_upsert(hashmap_t **const map, const void *const key, const void *const value)
 {
     assert(map && *map);
+    assert(key);
+    assert(value);
 
     hm_header_t* header = get_hm_header(*map);
     const size_t capacity = vector_capacity(*map);
@@ -180,6 +187,7 @@ bool hm_upsert(hashmap_t **const map, const void *const key, const void *const v
 void hm_remove(hashmap_t *const map, const void *const key)
 {
     assert(map);
+    assert(key);
 
     hm_header_t* header = get_hm_header(map);
     const size_t capacity = vector_capacity(map);
@@ -213,12 +221,16 @@ void hm_remove(hashmap_t *const map, const void *const key)
 
 size_t hm_capacity(const hashmap_t *const map)
 {
+    assert(map);
+
     return vector_initial_capacity(map);
 }
 
 
 size_t hm_count(const hashmap_t *const map)
 {
+    assert(map);
+
     const size_t capacity = hm_capacity(map);
     const hm_header_t *header = get_hm_header(map);
     size_t count = 0;
@@ -237,6 +249,7 @@ size_t hm_count(const hashmap_t *const map)
 void *hm_get(const hashmap_t *const map, const void *const key)
 {
     assert(map);
+    assert(key);
 
     const hm_header_t* header = get_hm_header(map);
     const size_t capacity = vector_capacity(map);
@@ -272,6 +285,8 @@ void *hm_get(const hashmap_t *const map, const void *const key)
 
 vector_t *hm_keys(const hashmap_t *const map)
 {
+    assert(map);
+
     const hm_header_t *header = get_hm_header(map);
     const size_t capacity = hm_capacity(map);
 
@@ -294,6 +309,8 @@ vector_t *hm_keys(const hashmap_t *const map)
 
 vector_t *hm_values(const hashmap_t *const map)
 {
+    assert(map);
+
     const hm_header_t *header = get_hm_header(map);
     const size_t capacity = hm_capacity(map);
 

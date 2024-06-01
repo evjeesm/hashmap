@@ -32,7 +32,7 @@ hm_opts_t;
 /*
 * Creates hashmap
 */
-void hm_create_(hashmap_t **const map, const hm_opts_t *opts);
+void hm_create_(hashmap_t **const map, const hm_opts_t *const opts);
 
 
 /*
