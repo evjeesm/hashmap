@@ -119,7 +119,7 @@ bool hm_insert(hashmap_t **const map, const void *key, const void *value)
     }
 
     rehash(map); /* rehash never fails unless allocation error
-                    occires in which case vector_error_handler will exit from the application. */
+                    occures in which case vector_error_handler will exit from the application. */
     (void)hm_insert(map, key, value);
     return true;
 }
