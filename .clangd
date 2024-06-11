@@ -1,4 +1,4 @@
 CompileFlags:
-  Add: [-std=c17, -xc, -Wall, -Wextra, -Isrc, -Ibitset, -I../vector/src]
+  Add: [-std=c17, -xc, -Wall, -Wextra, -Isrc, -Ibitset, -I../vector/src, -Wno-override-init]
   Compiler: cc
 ---

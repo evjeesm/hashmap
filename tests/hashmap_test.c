@@ -12,7 +12,7 @@ static hash_t hash_int(const void *ptr, size_t size)
 
 static void setup_empty(void)
 {
-    hm_create(map,
+    map = hm_create(
         .key_size = sizeof(int),
         .value_size = sizeof(int),
         .hashfunc = hash_int
@@ -37,11 +37,11 @@ START_TEST (test_hm_insert)
 {
     const int key = 2;
     const int value = 100;
-    bool retval = hm_insert(&map, &key, &value);
-    ck_assert(retval);
+    hm_status_t status = hm_insert(&map, &key, &value);
+    ck_assert_uint_eq(HM_SUCCESS, status);
 
-    retval = hm_insert(&map, &key, &value);
-    ck_assert(!retval);
+    status = hm_insert(&map, &key, &value);
+    ck_assert_uint_eq(HM_ALREADY_EXISTS, status);
 }
 END_TEST
 
@@ -53,7 +53,7 @@ START_TEST (test_hm_insert_full)
     // full capacity
     for (int i = 0; i < cap; ++i)
     {
-        ck_assert(hm_insert(&map, &i, &i));
+        ck_assert_uint_eq(HM_SUCCESS, hm_insert(&map, &i, &i));
     }
 
     cap = hm_capacity(map);
@@ -70,7 +70,7 @@ START_TEST (test_hm_insert_rehash)
     // full capacity
     for (int i = 0; i < old_cap; ++i)
     {
-        ck_assert(hm_insert(&map, &i, &i));
+        ck_assert_uint_eq(HM_SUCCESS, hm_insert(&map, &i, &i));
     }
 
     int value = 999;
@@ -96,7 +96,7 @@ START_TEST (test_hm_remove)
 {
     const int key = 534;
     const int value = 12;
-    ck_assert(hm_insert(&map, &key, &value));
+    ck_assert_uint_eq(HM_SUCCESS, hm_insert(&map, &key, &value));
     hm_remove(map, &key);
     ck_assert_ptr_null(hm_get(map, &key));
     ck_assert_uint_eq(hm_count(map), 0);
@@ -105,7 +105,7 @@ START_TEST (test_hm_remove)
     // full capacity
     for (int i = 0; i < cap; ++i)
     {
-        ck_assert(hm_insert(&map, &i, &i));
+        ck_assert_uint_eq(HM_SUCCESS, hm_insert(&map, &i, &i));
     }
 
     // delete all
@@ -126,7 +126,7 @@ START_TEST (test_hm_keys_values)
     for (int key = 0; key < expected_cap; ++key)
     {
         int val = key + 10;
-        ck_assert(hm_insert(&map, &key, &val));
+        ck_assert_uint_eq(HM_SUCCESS, hm_insert(&map, &key, &val));
     }
 
     vector_t *keys = hm_keys(map);

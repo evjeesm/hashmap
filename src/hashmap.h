@@ -15,24 +15,27 @@ typedef struct hm_opts
 }
 hm_opts_t;
 
+typedef enum hm_status_t
+{
+    HM_SUCCESS = VECTOR_SUCCESS,
+    HM_ALREADY_EXISTS = VECTOR_STATUS_LAST
+}
+hm_status_t;
+
+
 /*
 * The wrapper for `hm_create_` function that provides default values.
 */
-#define hm_create(hm_ptr, ...) {\
-    _Pragma("GCC diagnostic push") \
-    _Pragma("GCC diagnostic ignored \"-Woverride-init\"") \
-    hm_create_(&hm_ptr, &(hm_opts_t){ \
+#define hm_create(...) \
+    hm_create_(&(hm_opts_t){ \
         .initial_cap = 256, \
         __VA_ARGS__ \
-    }); \
-    _Pragma("GCC diagnostic pop") \
-}
-
+    })
 
 /*
 * Creates hashmap
 */
-void hm_create_(hashmap_t **const map, const hm_opts_t *const opts);
+hashmap_t *hm_create_(const hm_opts_t *const opts);
 
 
 /*
@@ -42,10 +45,16 @@ void hm_destroy(hashmap_t *const map);
 
 
 /*
+* Duplicates hashmap.
+*/
+hashmap_t *hm_clone(const hashmap_t *const map);
+
+
+/*
 * Insert new mapping into the hash map.
 * Call will fail if mapping for provided key already exists.
 */
-bool hm_insert(hashmap_t **const map, const void *const key, const void *const value);
+hm_status_t hm_insert(hashmap_t **const map, const void *const key, const void *const value);
 
 
 /*
@@ -58,7 +67,7 @@ bool hm_update(hashmap_t *const map, const void *const key, const void *const va
 /*
 * Updates value when mapping exists or inserts new mapping otherwise.
 */
-bool hm_upsert(hashmap_t **const map, const void *const key, const void *const value);
+hm_status_t hm_upsert(hashmap_t **const map, const void *const key, const void *const value);
 
 
 /*
@@ -95,7 +104,7 @@ void *hm_get(const hashmap_t *const map, const void *const key);
 *    = 1.0f -> reserve as match free space as elements currently stored, etc...
 *  ).
 */
-void hm_shrink_reserve(hashmap_t **const map, const float reserve);
+hm_status_t hm_shrink_reserve(hashmap_t **const map, const float reserve);
 
 
 /*

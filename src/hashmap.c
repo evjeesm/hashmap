@@ -45,14 +45,15 @@ static char *get_key(const hashmap_t *const map, const size_t index);
 static char *get_value(const hashmap_t *const map, const size_t index);
 
 static void randomize_factors(hm_header_t *const header);
-static void rehash(hashmap_t **const map, const size_t new_cap);
+static hm_status_t rehash(hashmap_t **const map, const size_t new_cap);
 
 /***                       ***
 * === API implementation === *
 ***                       ***/
 
-void hm_create_(hashmap_t **const map, const hm_opts_t *const opts)
+hashmap_t *hm_create_(const hm_opts_t *const opts)
 {
+    assert(opts);
     assert(opts->key_size && "key_size wasn't provided");
     assert(opts->value_size && "value_size wasn't provided");
     assert(opts->hashfunc && "hashfunc wasn't provided");
@@ -62,14 +63,16 @@ void hm_create_(hashmap_t **const map, const hm_opts_t *const opts)
     const size_t usage_tbl_size = calc_usage_tbl_size(opts->initial_cap);
 
     /* allocate storage for hashmap */
-    vector_create(*map,
+    hashmap_t *map = vector_create(
         .data_offset = sizeof(hm_header_t) + usage_tbl_size,
         .initial_cap = opts->initial_cap,
         .element_size = aligned_key_size + aligned_value_size
     );
 
+    if (!map) return NULL;
+
     /* initializing hashmap related data */
-    hm_header_t *header = get_hm_header(*map);
+    hm_header_t *header = get_hm_header(map);
 
     *header = (hm_header_t){
        .key_size = opts->key_size,
@@ -80,6 +83,15 @@ void hm_create_(hashmap_t **const map, const hm_opts_t *const opts)
 
     bitset_init(header->usage_tbl, usage_tbl_size);
     randomize_factors(header);
+
+    return map;
+}
+
+
+hashmap_t *hm_clone(const hashmap_t *const map)
+{
+    assert(map);
+    return vector_clone(map);
 }
 
 
@@ -90,7 +102,7 @@ void hm_destroy(hashmap_t *const map)
 }
 
 
-bool hm_insert(hashmap_t **const map, const void *key, const void *value)
+hm_status_t hm_insert(hashmap_t **const map, const void *key, const void *value)
 {
     assert(map && *map);
     assert(key);
@@ -110,20 +122,19 @@ bool hm_insert(hashmap_t **const map, const void *key, const void *value)
         {
             bitset_set(header->usage_tbl, BIT_FIELD_LEN, index, HM_SLOT_USED);
             set_entry(*map, index, key, value);
-            return true;
+            return HM_SUCCESS;
         }
         else if (0 == memcmp(key, get_key(*map, index), header->key_size))
         {
-            return false;
+            return HM_ALREADY_EXISTS;
         }
     }
 
-    const size_t new_cap = 2 * hm_capacity(*map);
-    rehash(map, new_cap);
-    /* rehash never fails unless allocation error occures
-     * in which case vector_error_handler will exit from the application. */
-    (void)hm_insert(map, key, value);
-    return true;
+    hm_status_t status = rehash(map, 2 * hm_capacity(*map));
+    if (HM_SUCCESS != status) return status;
+
+    (void) hm_insert(map, key, value);
+    return HM_SUCCESS;
 }
 
 
@@ -142,7 +153,7 @@ bool hm_update(hashmap_t *const map, const void *const key, const void *const va
 }
 
 
-bool hm_upsert(hashmap_t **const map, const void *const key, const void *const value)
+hm_status_t hm_upsert(hashmap_t **const map, const void *const key, const void *const value)
 {
     assert(map && *map);
     assert(key);
@@ -164,13 +175,13 @@ bool hm_upsert(hashmap_t **const map, const void *const key, const void *const v
             case HM_SLOT_UNUSED:
                 bitset_set(header->usage_tbl, BIT_FIELD_LEN, index, HM_SLOT_USED);
                 memcpy(get_value(*map, index), value, header->value_size);
-                return true;
+                return HM_SUCCESS;
 
             case HM_SLOT_USED:
                 if (0 == memcmp(key, get_key(*map, index), header->key_size))
                 {
                     memcpy(get_value(*map, index), value, header->value_size);
-                    return true;
+                    return HM_SUCCESS; 
                 }
                 break;
 
@@ -179,12 +190,11 @@ bool hm_upsert(hashmap_t **const map, const void *const key, const void *const v
         }
     }
 
-    const size_t new_cap = 2 * hm_capacity(*map);
-    rehash(map, new_cap);
-    /* rehash never fails unless allocation error occures
-     * in which case vector_error_handler will exit from the application. */
+    hm_status_t status = rehash(map, 2 * hm_capacity(*map));
+    if (HM_SUCCESS != status) return status;
+
     (void)hm_insert(map, key, value);
-    return true;
+    return HM_SUCCESS;
 }
 
 
@@ -287,7 +297,7 @@ void *hm_get(const hashmap_t *const map, const void *const key)
 }
 
 
-void hm_shrink_reserve(hashmap_t **const map, const float reserve)
+hm_status_t hm_shrink_reserve(hashmap_t **const map, const float reserve)
 {
     assert(map && *map);
     assert(reserve >= 0.0f);
@@ -295,7 +305,7 @@ void hm_shrink_reserve(hashmap_t **const map, const float reserve)
     const size_t count = hm_count(*map);
     const size_t new_cap = count * (1.0f + reserve);
 
-    rehash(map, new_cap);
+    return rehash(map, new_cap);
 }
 
 
@@ -306,10 +316,12 @@ vector_t *hm_keys(const hashmap_t *const map)
     const hm_header_t *header = get_hm_header(map);
     const size_t capacity = hm_capacity(map);
 
-    vector_t *keys;
-    vector_create(keys,
+    vector_t *keys = vector_create(
         .element_size = header->aligned_key_size,
-        .initial_cap = hm_count(map));
+        .initial_cap = hm_count(map)
+    );
+
+    if (!keys) return NULL;
 
     for (size_t slot = 0, key = 0; slot < capacity; ++slot)
     {
@@ -330,10 +342,11 @@ vector_t *hm_values(const hashmap_t *const map)
     const hm_header_t *header = get_hm_header(map);
     const size_t capacity = hm_capacity(map);
 
-    vector_t *values;
-    vector_create(values,
+    vector_t *values = vector_create(
         .element_size = calc_aligned_size(header->value_size, ALIGNMENT),
         .initial_cap = hm_count(map));
+
+    if (!values) return NULL;
 
     for (size_t slot = 0, value = 0; slot < capacity; ++slot)
     {
@@ -418,21 +431,21 @@ static size_t hash_to_index(const hm_header_t *header, const hash_t hash, const 
 }
 
 
-static void rehash(hashmap_t **const map, const size_t new_cap)
+static hm_status_t rehash(hashmap_t **const map, const size_t new_cap)
 {
     assert(new_cap >= hm_count(*map));
 
     const hm_header_t *old_header = get_hm_header(*map);
     const size_t prev_capacity = vector_initial_capacity(*map);
 
-    hashmap_t *new;
-
-    hm_create(new,
+    hashmap_t *new = hm_create(
         .initial_cap = new_cap,
         .key_size = old_header->key_size,
         .value_size = old_header->value_size,
         .hashfunc = old_header->hashfunc,
     );
+
+    if (!new) return (hm_status_t)VECTOR_ALLOC_ERROR;
 
     for (size_t i = 0; i < prev_capacity; ++i)
     {
@@ -444,5 +457,6 @@ static void rehash(hashmap_t **const map, const size_t new_cap)
 
     hm_destroy(*map);
     *map = new;
+    return HM_SUCCESS;
 }
 
