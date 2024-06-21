@@ -3,6 +3,7 @@
 
 !src/
 !tests/
+!examples/
 !*.c
 !*.h
 !*.am
