@@ -15,12 +15,6 @@ typedef struct
 }
 indices_t;
 
-hash_t hash_int(const void *const element, size_t size)
-{
-    (void) size;
-    return hash(*(int*) element);
-}
-
 indices_t two_sum(const vector_t *const numbers, int target)
 {
     hashmap_t *map = hm_create(.key_size = sizeof(int),

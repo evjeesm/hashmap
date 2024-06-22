@@ -4,12 +4,6 @@
 
 static hashmap_t *map;
 
-static hash_t hash_int(const void *ptr, size_t size)
-{
-    (void)size;
-    return hash(*(int*)ptr);
-}
-
 static void setup_empty(void)
 {
     map = hm_create(
