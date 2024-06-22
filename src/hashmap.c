@@ -34,7 +34,6 @@ hm_slot_status_t;
 * === forward declarations  === *
 ***                          ***/
 
-static size_t calc_aligned_size(const size_t size, const size_t alignment);
 static size_t calc_usage_tbl_size(const size_t capacity);
 
 static hm_header_t *get_hm_header(const hashmap_t *const map);
@@ -363,15 +362,6 @@ vector_t *hm_values(const hashmap_t *const map)
 /***                     ***
 * === static functions === *
 ***                     ***/
-
-/*
-* Function calculates size of the element while respecting requirement for alignment.
-*/
-static size_t calc_aligned_size(const size_t size, const size_t alignment)
-{
-    return (size + alignment - 1) / alignment * alignment;
-}
-
 
 static size_t calc_usage_tbl_size(const size_t capacity)
 {
