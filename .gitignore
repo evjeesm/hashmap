@@ -1,5 +1,8 @@
 *
 
+# submodules:
+!hash
+!.gitmodules
 
 !src/
 !tests/

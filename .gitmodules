@@ -1,0 +1,4 @@
+[submodule "hash"]
+	path = hash
+	url = git@github.com:JekasObps/hash
+	branch = main
