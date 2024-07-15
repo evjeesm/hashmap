@@ -1,0 +1,51 @@
+name: Makefile CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+       submodules: recursive
+    - uses: awalsh128/cache-apt-pkgs-action@latest
+      with:
+        packages: autoconf-archive valgrind check
+        version: 1.0
+
+    - name: Pull & update submodules recursively
+      run: |
+        git submodule update --init --recursive
+        git submodule update --recursive --remote
+
+    - name: autogen
+      run: ./autogen.sh
+    
+    - name: configure
+      run: ./configure CFLAGS='-Wall -Wextra -Wno-override-init -O2'
+
+    - name: Install dependencies
+      run: make
+
+    - name: Run check
+      run: make check
+
+    - name: Run valgrind check
+      run: make check-valgrind
+
+    - name: Archive test logs
+      uses: actions/upload-artifact@v4
+      with:
+        name: check-logs
+        path: tests/*.log
+        retention-days: 5
+
+    - name: Run distcheck
+      run: make distcheck
