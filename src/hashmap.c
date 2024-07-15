@@ -65,7 +65,8 @@ hashmap_t *hm_create_(const hm_opts_t *const opts)
     hashmap_t *map = vector_create(
         .data_offset = sizeof(hm_header_t) + usage_tbl_size,
         .initial_cap = opts->initial_cap,
-        .element_size = aligned_key_size + aligned_value_size
+        .element_size = aligned_key_size + aligned_value_size,
+        .alloc_param = opts->alloc_param,
     );
 
     if (!map) return NULL;
