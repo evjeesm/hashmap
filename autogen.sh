@@ -1,6 +1,6 @@
 #!/bin/sh
 
 
-autoreconf -fvi --install || exit 1;
+autoreconf -fvi || exit 1;
 
 

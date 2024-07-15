@@ -2,3 +2,7 @@
 	path = hash
 	url = git@github.com:JekasObps/hash
 	branch = main
+[submodule "vector"]
+	path = vector
+	url = git@github.com:evjeesm/vector
+	branch = main

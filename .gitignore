@@ -1,12 +1,13 @@
 *
 
 # submodules:
-!hash
 !.gitmodules
+!hash
+!vector
 
-!src/
-!tests/
-!examples/
+!src
+!tests
+!examples
 !*.c
 !*.h
 !*.am
