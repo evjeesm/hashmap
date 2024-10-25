@@ -10,9 +10,9 @@ typedef struct hm_opts
 {
     size_t key_size;
     size_t value_size;
-    size_t initial_cap;
+    size_t capacity;
     hashfunc_t hashfunc;
-    void *alloc_param;
+    alloc_opts_t alloc_opts; /**< @see vector_opts_t::alloc_opts_t    */
 }
 hm_opts_t;
 
@@ -29,7 +29,7 @@ hm_status_t;
 */
 #define hm_create(...) \
     hm_create_(&(hm_opts_t){ \
-        .initial_cap = 256, \
+        .capacity = 256, \
         __VA_ARGS__ \
     })
 

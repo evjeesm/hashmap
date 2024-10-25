@@ -1,5 +1,6 @@
 #include "hashmap.h"
 #include "bitset.h"
+#include "vector.h"
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +11,7 @@
 
 typedef struct hm_header
 {
+    alloc_opts_t alloc_opts;
     size_t key_size;
     size_t aligned_key_size;
     size_t value_size;
@@ -17,7 +19,6 @@ typedef struct hm_header
 
     unsigned int a; /* random factors for multiplicative hashing */
     unsigned int b;
-
     char usage_tbl[];
 }
 hm_header_t;
@@ -59,14 +60,14 @@ hashmap_t *hm_create_(const hm_opts_t *const opts)
 
     const size_t aligned_key_size = calc_aligned_size(opts->key_size, ALIGNMENT);
     const size_t aligned_value_size = calc_aligned_size(opts->value_size, ALIGNMENT);
-    const size_t usage_tbl_size = calc_usage_tbl_size(opts->initial_cap);
+    const size_t usage_tbl_size = calc_usage_tbl_size(opts->capacity);
 
     /* allocate storage for hashmap */
     hashmap_t *map = vector_create(
-        .data_offset = sizeof(hm_header_t) + usage_tbl_size,
-        .initial_cap = opts->initial_cap,
+        .ext_header_size = sizeof(hm_header_t) + usage_tbl_size,
+        .initial_cap = opts->capacity,
         .element_size = aligned_key_size + aligned_value_size,
-        .alloc_param = opts->alloc_param,
+        .alloc_opts = opts->alloc_opts,
     );
 
     if (!map) return NULL;
@@ -75,10 +76,11 @@ hashmap_t *hm_create_(const hm_opts_t *const opts)
     hm_header_t *header = get_hm_header(map);
 
     *header = (hm_header_t){
-       .key_size = opts->key_size,
-       .aligned_key_size = aligned_key_size,
-       .value_size = opts->value_size,
-       .hashfunc = opts->hashfunc
+        .alloc_opts = opts->alloc_opts,
+        .key_size = opts->key_size,
+        .aligned_key_size = aligned_key_size,
+        .value_size = opts->value_size,
+        .hashfunc = opts->hashfunc,
     };
 
     bitset_init(header->usage_tbl, usage_tbl_size);
@@ -237,7 +239,7 @@ size_t hm_capacity(const hashmap_t *const map)
 {
     assert(map);
 
-    return vector_initial_capacity(map);
+    return vector_capacity(map);
 }
 
 
@@ -427,13 +429,14 @@ static hm_status_t rehash(hashmap_t **const map, const size_t new_cap)
     assert(new_cap >= hm_count(*map));
 
     const hm_header_t *old_header = get_hm_header(*map);
-    const size_t prev_capacity = vector_initial_capacity(*map);
+    const size_t prev_capacity = hm_capacity(*map);
 
     hashmap_t *new = hm_create(
-        .initial_cap = new_cap,
+        .capacity = new_cap,
         .key_size = old_header->key_size,
         .value_size = old_header->value_size,
         .hashfunc = old_header->hashfunc,
+        .alloc_opts = old_header->alloc_opts,
     );
 
     if (!new) return (hm_status_t)VECTOR_ALLOC_ERROR;
