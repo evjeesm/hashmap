@@ -1,8 +1,8 @@
 [submodule "hash"]
 	path = hash
-	url = git@github.com:JekasObps/hash
+	url = https://github.com/evjeesm/hash
 	branch = main
 [submodule "vector"]
 	path = vector
-	url = git@github.com:evjeesm/vector
+	url = https://github.com/evjeesm/vector
 	branch = main
