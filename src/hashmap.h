@@ -59,6 +59,13 @@ hm_status_t hm_insert(hashmap_t **const map, const void *const key, const void *
 
 
 /*
+* Reserve uninitialized space for the key.
+* Won't fail if the key exists.
+*/
+hm_status_t hm_reserve(hashmap_t **const map, const void *const key, void **const value_out);
+
+
+/*
 * Update existing mapping in the hash map.
 * Call will fail when mapping for that key is missing.
 */
