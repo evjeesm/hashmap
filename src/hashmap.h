@@ -24,6 +24,11 @@ typedef enum hm_status_t
 hm_status_t;
 
 
+typedef int (*hm_foreach_t) (const void *const key, const void *const value, void *const param);
+typedef int (*hm_transform_t) (const void *const key, void *const value, void *const param);
+typedef int (*hm_aggregate_t) (const void *const key, const void *const value, void *const acc, void *const param);
+
+
 /*
 * The wrapper for `hm_create_` function that provides default values.
 */
@@ -125,6 +130,24 @@ vector_t *hm_keys(const hashmap_t *const map);
 * Returns values's subset.
 */
 vector_t *hm_values(const hashmap_t *const map);
+
+
+
+/** @see vector_foreach */
+int hm_foreach(const hashmap_t *const map,
+        const hm_foreach_t func,
+        void *const param);
+
+/** @see vector_aggregate */
+int hm_aggregate(const hashmap_t *const map,
+        const hm_aggregate_t func,
+        void *const acc,
+        void *const param);
+
+/** @see vector_transform */
+int hm_transform(hashmap_t *const map,
+        const hm_transform_t func,
+        void *const param);
 
 
 #endif/*_HASHMAP_H_*/

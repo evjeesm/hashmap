@@ -351,6 +351,73 @@ vector_t *hm_values(const hashmap_t *const map)
 }
 
 
+int hm_foreach(const hashmap_t *const map,
+        const hm_foreach_t func,
+        void *const param)
+{
+    assert(map);
+    assert(func);
+
+    hm_header_t* header = get_hm_header(map);
+    const size_t capacity = hm_capacity(map);
+    const size_t index = 0;
+
+    for (size_t i = 0; i < capacity; ++i)
+    {
+        const hm_slot_status_t slot_stat = bitset_test(header->usage_tbl, BIT_FIELD_LEN, index);
+
+        if (HM_SLOT_USED != slot_stat) continue;
+
+        void *const key = get_key(map, index);
+        void *const value = get_value(map, index);
+
+        int status = func(key, value, param);
+        if (status) return status;
+    }
+
+    return HM_SUCCESS;
+}
+
+int hm_aggregate(const hashmap_t *const map,
+        const hm_aggregate_t func,
+        void *const acc,
+        void *const param)
+{
+    assert(map);
+    assert(func);
+    assert(acc);
+
+    hm_header_t* header = get_hm_header(map);
+    const size_t capacity = hm_capacity(map);
+    const size_t index = 0;
+
+    for (size_t i = 0; i < capacity; ++i)
+    {
+        const hm_slot_status_t slot_stat = bitset_test(header->usage_tbl, BIT_FIELD_LEN, index);
+
+        if (HM_SLOT_USED != slot_stat) continue;
+
+        void *const key = get_key(map, index);
+        void *const value = get_value(map, index);
+
+        int status = func(key, value, acc, param);
+        if (status) return status;
+    }
+
+    return HM_SUCCESS;
+}
+
+int hm_transform(hashmap_t *const map,
+        const hm_transform_t func,
+        void *const param)
+{
+    assert(map);
+    assert(func);
+
+    return hm_foreach(map, (hm_foreach_t)func, param);
+}
+
+
 /***                     ***
 * === static functions === *
 ***                     ***/
